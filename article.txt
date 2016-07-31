@@ -1,0 +1,420 @@
+--INTRODUCTION--
+
+I've become very interested and immersed in the programming and thinking behind
+Bitcoin - and found it inspiring. Because its exposed me to something I love -
+ideas that have required brilliant thinkers to invent them, but which,
+ultimately are reasonably simple, and elegant and useful in their application
+to solving some challenges in the real (programming) world.
+
+This piece looks at two of them, Merkle Trees and a Bitcoin application of
+them. It's all about one computer trying to get truthful answers from another
+computer that may well be lying.
+
+I confess to finding it quite challenging myself to gain a proper understanding
+of these two concepts. Not so much because they are fundamentally difficult.
+More because they are not well served by the kind of lucid interpretation
+materials on the internet we have come to expect for most computer science
+topics. So that's why I've written this to communicate what I've learned for
+wider consumption.  We'll cover Merkle Trees first, and then with that under
+out belt, we'll move on to the Bitcoin use case.
+
+Merkle Trees, it transpires, are used to solve challenges in several well known
+software systems. Like the BitTorrent peer to peer file download service, in
+Skype, in Cassandra (the distributed no-SQL database), and in Git's internals.
+
+Merkle Trees are concerned with the situation when your computer wants to know
+some information about a large data structure that is held by another computer.
+The data structure is sufficiently big that you want to avoid if possible
+transferring it in its entirety across the network. It's about solving this
+problem when the other computer and the network itself are particularly
+untrustworthy. This is the norm for peer-to-peer network communications, where
+the computers involved have no public verifiable identity unlike a public web
+server, and furthermore offer valuable opportunities to the bad guys. For
+example to perpetrate fraud in the Bitcoin network or to deliver viruses in the
+BitTorrent case.
+
+In peer to peer internet networks, you must assume that the information you get
+back is highly likely to be wrong, either from malicious intent or from
+communication errors.
+
+The Merkle Tree gives us a kind of DNA or fingerprint for the data, that is
+inextrixably tied in to what it contains and how it has been assembled.  Your
+computer can use a Merkle Tree to prove for itself independently if the answers
+it gets back are true.
+
+--MATERIAL SEQUENCE--
+
+First I'll start with a desciption of what sort of data Merkle Trees apply to,
+and what sorts of questions you can ask about the data, and then use Merkle
+Trees to prove to yourself that the answers you got are truthful.  Then I'll
+explain how this can solve some challenges in a widely know use case;
+BitTorrent being used to download a video file.  Then I'll explain how it
+works. (In words).
+
+Then I'll switch over to the Bitcoin use case. I'll explain a bit about how
+Bitcoin works, and in particular the challenges faced by the "lightweight"
+Single Payment Verification nodes. These are Bitcoin computing nodes that are
+viable to run on phones to let you pay for stuff with your Bitcoins, but for
+reasons I'll explain later, they cannot exploit completely, the originally
+conceived Bitcoin model for security and consensus-based trust.
+
+Once I've set out the logic we wish to put into code to solve this challenge,
+I'll introduce some illustrative code I've written that shows where Merkle
+Trees come in. This is not code that deals in the real Bitcoin protocol or in
+network communication. Instead it boils down the Bitcoin logic I want to
+illustrate in code to the minimum-viable, and simplest representation I can
+come up with. I'm hoping this makes the principles easier to grasp.
+
+For the explanation, I've assumed you have some experience of programming and
+know for example what a one-way hashing algorithm is. I've assumed virtually
+zero prior knowledge of Bitcoin.
+
+--WHAT SORT OF DATA--
+
+Merkle Trees work with things called "blocks", which hold a sequence of things
+called "records". A record is just a sequence of bytes and for the purposes of
+this talk we don't much care what they represent. It's just binary ones and
+zeros which could represent anything.  The block is also just a sequence of
+bytes, which contains, the records packed one after the other. Blocks generally
+have some header information in as well.
+
+BitTorrent and BitCoin both use blocks.  BitTorrent's file-download blocks are
+the bytes that makes up a large file you want to download, split into records
+simply by dividing the contents up at 512KB intervals.  Bitcoin's blocks hold a
+sequence of Bitcoin transactions (which have variable size). 
+
+--SO NOW THE MERKLE TREE--
+
+What has a Merkle Tree got to do with records and blocks?  A Merkle Tree is a
+kind of DNA evidence or a fingerprint that captures what is inside the records,
+and which records and sequence of records was used to make up a given block.
+The tree is very small in comparison with the block itself so it is convenient
+to transmit between computers. It may be calculated reliably and repeatably by
+any computer with access to the block and the records. And it is
+cryptographically robust.  Meaning that while it is quick and easy to compute
+the fingerprint when you have the data. It is computationally infeasible to
+create fake data that will exhibit the same fingerprint. 
+
+You have good reason to protest at this point that there is nothing new here -
+because you can get all that goodness I just mentioned simply by hashing the
+block in its entirety. But that approach is only of any use to you if you are
+willing to also acquire the entire block data to enable you to calculate the
+hash for yourself independently. The point of Merkle Trees is that you get a
+similar family of benefits without having to transmit, and gain possesion of
+all of the data.
+
+In most use-cases, your computer need only obtain a tiny part of the Merkle
+Tree of a block to ask certain questions and prove the truthfulness of the
+answers it gets. That is the nub.
+
+--WHAT SORT OF QUESTIONS ANSWERS CAN IT VALIDATE?--
+
+Consider the BitTorrent video file download use-case.  Your BitTorrent software
+will distribute requests for the 512KB chunks to a large set of untrusted
+computers on the internet. When these chunks arrive they can be reassembled to
+reconstitute the file.  This shifts the load away from central servers onto a
+peer-to-peer swarm.  Upon receipt of each chunk your BitTorrent software can
+ask the untrusted computer to provide proof that you can verify independently
+that the chunk it delivered is properly formed, and does authentically belong
+in that part of the original file (block). Your computer can respond to any
+record delivered that does not pass the proof test, by rejecting it, and asking
+for just that chunk alone to re-fetched, probably by a different remote
+computer. Thus avoiding the need to abort and restart the whole of the
+download.
+
+The Bitcoin use-case occurs when you have a computer running a "light" Bitcoin
+client (your phone probably). You want the "wallet" part of this app to use
+some of your bitcoins to pay for some new tyres for your bicycle at "The 8-Ball
+Cyclery" shop (http://www.8ballbikes.co.uk/). Your computer has to ask the peer
+to peer bitcoin network to prove that you have some coins to spend sitting in
+the bitcoin address your wallet app is lookin after. It will do this by
+chatting to some Bitcoin nodes it has made friends with, and wants to prove to
+its own satisfaction that these remote computers are telling it the truth.
+
+--HOW DO YOU MAKE A MERKLE TREE?--
+
+Let's say we have a block with a sequence of 90 records in it. It is of no
+consequence what these records are about. We start by calculating a hash value
+for each of these records. Given the context of the use-cases we've mentioned
+this must be a strong cryptographic hash, like SHA-256 for example. We thus
+produce a sequence of 90 hash values.  If we'd used the SHA-256 hashing
+algorithm, one hash value looks something like this if we print it out in hex:
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855. These hashes
+are always exactly the same length (256 bits) regardless of the size of the
+input.
+
+Bear with me, the explanation works best if we start with the steps you take
+make the tree and then explain what you can do with it afterwards.  Imagine
+those 90 hashes sitting in a horizontal row. Now we take the first two hashes
+in the row, join them together (concatenate them), and make a new hash of the
+result. We could start a new row above the first one by writing down that new
+hash value.  Then we could move on to the third and fourth hash values of the
+bottom row, and combine those two to make a new hash value the same way, and we
+could write that value down as the second item in the higher row. If we keep
+going, we'll consume all of the bottom row and have produced a higher row with
+only half the number of entries is as the bottom row.  So if we kept doing
+that, working our way upwards, we'd eventually arrive at a top row with just
+one hash in it.  This single hash value is the Merkle Root, and can be thought
+of as the root of a binary tree. Each node is simply the hash of the
+concatenated hashes of its two children. Except the bottom row of course -
+which are the hashes of the records in the block.  We skipped the annoying
+complication of rows which have an odd number of members. In these cases (by
+definition), you duplicate the last one to make it even.
+
+--WHAT CAN YOU DO WITH IT--
+
+Imagine you are the BitTorrent client software downloading the many chunks of a
+file from diverse peer to peer networked computers. Before you started, you
+made sure you got the Merkle Root value for this file from a computer that you
+can trust. Probably a public server that authenticated itself to your
+satisfaction with a cryptographic certificate, and which collaborated with you
+to transmit the Merkle Root over the secure transport layer (TLS).
+
+Now the BitTorrent protocol requires the remote computer, to not only provide
+you with a chunk from the file, but also a small thread from the corresponding
+Merkle Tree (its Merkle-Path). Note that you receive this data as each chunk
+arrives, clearly before the whole file is available to you. The Merkle Path
+gives you all the information you need to calculate your way up to the Merkle
+Root value. If the Merkle Root value you calculate yourself matches up with the
+value provided from the trusted public server, you have proved that not only is
+the payload true and correct, but crucially also, that that chunk properly
+belongs in that slot in the file you are reconstructing with all the other
+chunks.
+
+So what is this Merkle Path from the tree? Well the first thing you're going to
+want is the hash of the node that sat next to your chunk in the bottom row (its
+sibling). Including if it sat as the left or right member in that pair. Once
+you have that you can concatenate the two hashes, and then hash that combined
+value yourself, and now you have the hash value that sat above your chunk in
+the next row up in the tree. Let's call that the second row. So that's the
+first fragment you want to see in the Merkle Path. To climb your way up from
+the second row to the third row, you now want the hash value of the node that
+set next to one you just calculated in the second row (the first node's uncle).
+Because if you had that, you can repeat the concatenate and re hash process to
+calculate the node in the third row. So of course, that is the second fragment
+in the Merkle Path.  And I'm sure you can now see that the rest of the path you
+need, is just one hash value from each remaining higher tier in the tree.
+
+If the file you are downloading is for example 30GB, then when divided into
+256KB chunks it will have 122,881 chunks. So the Merkle tree will have 122,881
+nodes in its bottom row. The Merkle Path you need is one 32 byte value from
+each tier in the tree.  A complete binary tree with 122,881 nodes has only 17
+tiers. (A logarithmic relationship). So you get all the data you need for your
+proof test in just 544 bytes of data (17 * 32), and you need to do only 17 hash
+calculations.
+
+--BACKGROUND TO THE BITCOIN USE-CASE--
+
+Let me start with a whistle-stop summary of the Blockchain - which is the data
+storage that underpins the whole Bitcoin eco system. Bitcoins are a currency
+(some debate here), which can be transferred electronically from one party to
+another. That's not quite true. There are a couple of concepts that take a bit
+of getting used to. No-one holds bitcoins. Bitcoins live in things that can be
+thought of as being similar to safe deposit boxes - and these are called
+Bitcoin addresses. If you have the key to a safe deposit box, you, and
+only you, can get hold of the money inside and thus spend it. If you lose your
+key and someone else finds it, then they aquire the ability to spend the money
+in the box and you simultaneously lose that ability. The same is true of
+Bitcoin addresses. When you create a Bitcoin address, you get the private half
+of a public/private key pair that's created for that address as part of the
+address creation. That private key gives you the ability to spend the 
+Bitcoins that are subsequently bestowed to that address.
+
+There is no link between the Bitcoin addresses that are created and the person
+or party that created them. Whoever has the private key can use it. The entire
+Bitcoin eco system does not recognize the concept of a party, it recognizes
+only the concept of Bitcoin addresses as places between which Bitcoin values
+can flow.
+
+The Blockchain is a continously growing record of all Bitcoin transactions ever
+struck. It is in the public domain, accessible to all, but with various
+cryptographic measures woven into it. It is held in no single place and there
+is no central authority for it. Instead thousands of computers form a swarm of
+peer to peer network connections that collaborate, and each one of these holds
+its own copy of the Blockchain. You could go out tomorrow and build a new one
+to add to the swarm if you wanted to.
+
+The data model contained in the Blockchain is fairly simple. It is nothing more
+than a sequence of transactions. The most common type of transaction is also
+simple. It identifies a tranche of Bitcoin belonging to address A that is
+going to get moved to address B. The value being transferred to the new owner
+is described as this transaction's "output". At the time of the transaction,
+this value has clearly not yet been spent by B, so it is known as an
+"unspent transaction output", usually abbreviated to UTXO. The source of this
+value being transferred is the transaction's "input". And it is addressed in
+the transaction by reference to an UTXO from some earlier transaction in the
+Blockchain in favour of A. Hence the Bitcoins being moved are traceable all the
+way back the point of their creation. (See paragraph about miners coming soon).
+
+Two important things can be observed about this model. The first is that there
+is no explicit modelling of balances, nor of transactions outputs being spent
+or unspent. The software applications interacting with the Blockchain, clearly
+do need to know these things, but they are obliged, by design, to deduce them
+from first principles from the aggregate transaction history in the Blockchain.
+
+As transactions enter the network they get bunched up into blocks of maybe 1000
+or so, and a set of special nodes called miners compete with each other in a
+race to make a block and get it accepted into the Blockchain. To do this they
+have to do some very computationally expensive logical calculations in the
+nature of solving a puzzle. There is some self-adjusting logic to ensure that
+someone will win the race for the next block approximately every ten minutes.
+As the newly solved block is propagated around the swarm, all the other nodes
+can do some relatively inexpensive calculations to prove to themselves that the
+block is legitimate and only accept it into their own copy of the Blockchain if
+they find it so. This legitimacy test includes tracing the transactions through
+to make sure no one is trying to present an input to a transaction that can be
+shown earlier in the chain to be already used up.
+
+The reason I explained all that is to show that software interacting with the
+Blockchain it would seem is obliged to hold its own copy of the entire chain if
+it wants to identify some Bitcoins that are still available to use to pay for
+something. But that data is infeasibly large for a  mobile phone app for
+example, and mobile phones are a very attractive platform for making payments
+with Bitcoin.
+
+The solution has been the evolution of "light" Bitcoin clients that skin the
+cat a slightly different way. Specifically Single Payment Verification Nodes.
+(SPV nodes).
+
+And the way they skin the cat - is to use Merkle Trees.
+
+--BITCOIN'S SINGLE PAYMENT VERIFICATION (SPV) NODES--
+
+So we've established that SPV nodes cannot realistically hold a copy of the
+Blockchain themselves. So they need to hold a conversation with nodes in the
+swarm that do hold a full copy, to get the information they need about the
+coins you have available to spend.  But they have to conduct this conversation
+with the swarm with the assumption that the swarm will very likely include
+maliciously dishonest members. I'll now explain the three principles they use
+to succeed in this, and how Merkle Trees fit in.
+
+The first principal is that SPV nodes do hold data about the full chain - but
+only in the form of the headers of the blocks (so no transactions). The headers
+are (relatively) tiny and have been brilliantly designed so that they can be
+obtained by SPV nodes from potentially dishonest full nodes, but the SPV node
+can independently test for their truth. The way that works is as follows. There
+is a deterministic way to generate a cryptographic hash for a block, that
+depends only on data that is present in the block header. So once an SPV node
+has been given some block headers, it can calculate their hash values itself
+independently.  Each block header proclaims its predecessor in the Blockchain
+by citing the predecessor's hash value. So the SPV node can work out for itself
+if the headers it has been given when taken together make up a self-consistent
+chain.
+
+Now the node will want to satisfy itself that these blocks have really come
+from the real distributed, consensually agreed Blockchain. The fact that they
+form a cryptographically consistent chain does not prove that. This is where
+the work done by the miners in their competition to get blocks into the
+Blockchain comes in. I mentioned that a block's hash is based entirely on the
+block's header. Well there is a special field in the header called (rather
+unfortunately with regard to British slang) the "nonce". It's just an integer.
+But the thing is, any change to the value of this nonce value will completely
+alter the hash value of the header. What the miners do in their competition is
+to search for a value for the nonce that satisfies a cryptographic challenge.
+The challenge is that the when the nonce is set to that value, and the block
+header has its hash calculated, the hash value that comes out has so many
+leading zeros. If you had to find a value that produced a hash that had just
+one leading zero, you'd find one on average with just 15 trial and error
+experiments. But it has to be so difficult it takes massively powerful kit
+about ten minutes and the difficulty has to escalate over time so that the ten
+minute target is preserved as the arms race in mining kit progresses. This is
+achieved by Bitcoin having a logically prescribed moving target (how many
+leading zeros) for the level of difficulty that is keyed into what miners are
+achieving in comparison with the ten minute goal.  You can see the trends for
+this here: https://bitcoinwisdom.com/bitcoin/difficulty. When I looked on July
+31st 2016, the current hashing performance required by a competitive miner was
+one and a half billion Giga hashes per second. This is way beyond HPC
+performance. You need to deploy dedicated ASICs in parallel, and club together
+in pools with other miners as well to compete today.
+
+A natural question is why
+would you bother - given that it's going to cost you a bundle of money? That's
+all part of the brilliant thinking behind the Bitcoin ecosystem. You bother
+because the miner that wins any of  these ten-minute competitions gets two
+rewards. First each win produces by definition some newly minted Bitcoin - in
+favour of the winning miner. Second, each transaction in the block carries a
+processing fee or service charge, that the parties that created the transaction
+can decide for themselves. The winning minor is awarded all those fees.
+
+I've teased out those details to show that you have to be determined to compete
+as a miner, and to spend so much on electricity you literally tend to set up
+next door to a large hydro-electric plant where electricity costs less. This is
+by design. It encourages honest hashing power to join in for the financial
+rewards of mining, and to place financial barriers to people wishing to subvert
+the Bitcoin network on any scale.
+
+Coming back the the SPN node's trust checking needs then. The marvellous thing
+is, that your SPV node can do just one hash calculation on the block header
+that contains the nonce value so painfully found by the miner (The "Proof of
+Work").  If the
+resultant hash has the required number of leading zeros - it can be certain
+that the block is from the consensually accepted Blockchain and got put there
+by a successfully competing miner. 
+
+So now we have shown how your SPV node can be satisfied by its copy of the
+block headers, we move on to how it gets information it can trust about the
+transactions in the Blockchain that affect your Bitcoin address - and thus
+deduce what unspent coins (UTXO) you have to spend.
+
+--USING MERKLE TREES TO TRUST BITCOIN TRANSACTION INFORMATION--
+
+Your SPV node starts off by telling a randomly selected peer that it only wants
+to hear about transactions that involve your bitcoin address. This has to be
+specified with a level of mystery so that the remote node cannot actually tell
+what your address is, but can send you all the data you want, along with a
+bunch of false positives. You can specify parameters that strike the balance
+you want between secrecy and the volume of false positives you receive. You
+send this filter specification using Bitcoins "FilterLoad" message, and the
+filter is known as a "Bloom Filter".
+
+Then your SPV node will receive from the peer "MerkleBlock" messages. These are
+a type of block header, and contain amongst other things: the hash of the
+previous block in the chain, the Merkle Root value of the block, the current
+difficultly level (equivalent to the number of leading zeros required), the
+nonce value discovered by the miner to make the hash pass the puzzle test, and
+the number of transactions (in total, not just filtered) in that block. Finally
+this message contains a sequence of hash values that encode the Merkle Path for
+the transactions that are in the block in the Blockchain that match the filter
+you set. Note the transactions themselves are not sent in the MerkleBlock
+message, but arrive straight away afterwards, in separate "tx" messages.
+
+The way the Merkle Path is encoded and modelled is complicated, because it
+doesn't just provide the path for one transaction. It encodes the paths of all
+the matching transactions in that block. The Bitcoin Improvement Proposal (BIP)
+that introduced these messages, BIP0037
+(https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki) gives very
+precise instructions for how to code up the building and packing of the Merkle
+Path in this message, and then for clients on how to traverse the implied tree
+to do the proof of truth.
+
+--FINALLY, SOME EXAMPLE CODE--
+
+KISS
+
+Cann we simulate the bitcoin example enough for it not to look foolish?
+
+We have one SPV node and one remote peer node.
+
+The remote peer simulates the holding of a block containing transactions, by
+holding the text of a shakespeare play. It splits the text into 512byte chunks
+to represent transactions in the block.
+It holds the transactions in memory along with the merkle tree it has built 
+for them.
+
+Our SPV node asks the remote node for the merkle root at the outset - knowing
+(because this is a demo and not real), that it can trust the answer.
+
+Our SPV node then simulates teh more complex bitcoin dialogue by just asking
+the remote for teh 42nd transaction in the block, and expects the remote node
+to provide the merkle path for it also. We can print out this fragment of text
+and expect to see a scrap of 17th Century English (by way of an amusing
+diversion.)
+
+Once the SPV node receives this, it independently traverses the implied mt to
+calc the merkle root and makes sure it matches the expected value it obtained
+earlier - which of course it will.
+
+We'll then send a message to the remote node to start behaving dishonestly and
+repeat the process, to show that the MerkleTree will pick this up.
+
+Resume when have written the code.
