@@ -8,7 +8,7 @@ import ()
 */
 
 type Block struct {
-	records []Record
+	records []*Record
 }
 
 type Record []byte
