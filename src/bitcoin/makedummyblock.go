@@ -1,27 +1,18 @@
-package merkle
+package bitcoin
 
-import ()
-
-/*
-	"net/http"
+import (
 	"io/ioutil"
-*/
+	"net/http"
+)
 
-type Block struct {
-	records []*Record
-}
-
-type Record []byte
-
-/*
-func (blk *Block) fillRecords() {
+func MakeDummyBlockFromSherlockHolmesText() (block Block) {
 	res, _ := http.Get("https://sherlock-holm.es/stories/plain-text/bosc.txt")
 	body, _ := ioutil.ReadAll(res.Body)
 	sz := 512
 	numRec := len(body) / sz // deliberate integer division
 	for i := 0; i < numRec; i++ {
-		record := body[i * sz: (i + 1) * sz]
-		blk.records = append(blk.records, record)
+		record := body[i*sz : (i+1)*sz]
+		block.Records = append(block.Records, record)
 	}
+	return
 }
-*/

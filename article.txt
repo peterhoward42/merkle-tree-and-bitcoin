@@ -6,9 +6,9 @@ ideas that have required brilliant thinkers to invent them, but which,
 ultimately are reasonably simple, and elegant and useful in their application
 to solving some challenges in the real (programming) world.
 
-This piece looks at two of them, Merkle Trees and a Bitcoin application of
-them. It's all about one computer trying to get truthful answers from another
-computer that may well be lying.
+This piece looks at two of these ideas, Merkle Trees and a Bitcoin application
+of them. It's all about one computer trying to get truthful answers from
+another computer that may well be lying.
 
 I confess to finding it quite challenging myself to gain a proper understanding
 of these two concepts. Not so much because they are fundamentally difficult.
@@ -120,7 +120,7 @@ in that part of the original file (block). Your computer can respond to any
 record delivered that does not pass the proof test, by rejecting it, and asking
 for just that chunk alone to re-fetched, probably by a different remote
 computer. Thus avoiding the need to abort and restart the whole of the
-download.
+download, and quite possibly before even all the other chunks have arrived.
 
 The Bitcoin use-case occurs when you have a computer running a "light" Bitcoin
 client (your phone probably). You want the "wallet" part of this app to use
@@ -152,14 +152,15 @@ hash value.  Then we could move on to the third and fourth hash values of the
 bottom row, and combine those two to make a new hash value the same way, and we
 could write that value down as the second item in the higher row. If we keep
 going, we'll consume all of the bottom row and have produced a higher row with
-only half the number of entries is as the bottom row.  So if we kept doing
-that, working our way upwards, we'd eventually arrive at a top row with just
-one hash in it.  This single hash value is the Merkle Root, and can be thought
-of as the root of a binary tree. Each node is simply the hash of the
-concatenated hashes of its two children. Except the bottom row of course -
-which are the hashes of the records in the block.  We skipped the annoying
-complication of rows which have an odd number of members. In these cases (by
-definition), you duplicate the last one to make it even.
+only half the number of entries the bottom row has.  So if we kept doing that,
+working our way upwards, we'd eventually arrive at a top row with just one hash
+in it.  This single hash value is the Merkle Root, and can be thought of as the
+root of a binary tree. Each node is simply the hash of the concatenated hashes
+of its two children. Except the bottom row of course - which are the hashes of
+the records in the block.  We skipped the annoying complication of rows which
+have an odd number of members. In these cases (by definition), you treat the
+only-child at the end as as a special case and do the concatenation with two
+copies of the only-child's hash.
 
 --WHAT CAN YOU DO WITH IT--
 
@@ -182,14 +183,14 @@ belongs in that slot in the file you are reconstructing with all the other
 chunks.
 
 So what is this Merkle Path from the tree? Well the first thing you're going to
-want is the hash of the node that sat next to your chunk in the bottom row (its
-sibling). Including if it sat as the left or right member in that pair. Once
-you have that you can concatenate the two hashes, and then hash that combined
-value yourself, and now you have the hash value that sat above your chunk in
-the next row up in the tree. Let's call that the second row. So that's the
-first fragment you want to see in the Merkle Path. To climb your way up from
-the second row to the third row, you now want the hash value of the node that
-set next to one you just calculated in the second row (the first node's uncle).
+want is the hash of the sibling node that sat next to yours in the bottom row
+and got combined with it to build the parent in the next row up.  Once you have
+that you can concatenate the two hashes, and then hash that combined value
+yourself, and now you have the hash value that sat above your chunk in the next
+row up in the tree. Let's call that the second row. So that's the first
+fragment you want to see in the Merkle Path. To climb your way up from the
+second row to the third row, you now want the hash value of the node that set
+next to one you just calculated in the second row (the first node's uncle).
 Because if you had that, you can repeat the concatenate and re hash process to
 calculate the node in the third row. So of course, that is the second fragment
 in the Merkle Path.  And I'm sure you can now see that the rest of the path you
@@ -197,7 +198,7 @@ need, is just one hash value from each remaining higher tier in the tree.
 
 If the file you are downloading is for example 30GB, then when divided into
 256KB chunks it will have 122,881 chunks. So the Merkle tree will have 122,881
-nodes in its bottom row. The Merkle Path you need is one 32 byte value from
+nodes in its bottom row. The Merkle Path you need is one 32 byte hash value from
 each tier in the tree.  A complete binary tree with 122,881 nodes has only 17
 tiers. (A logarithmic relationship). So you get all the data you need for your
 proof test in just 544 bytes of data (17 * 32), and you need to do only 17 hash
@@ -211,14 +212,14 @@ storage that underpins the whole Bitcoin eco system. Bitcoins are a currency
 another. That's not quite true. There are a couple of concepts that take a bit
 of getting used to. No-one holds bitcoins. Bitcoins live in things that can be
 thought of as being similar to safe deposit boxes - and these are called
-Bitcoin addresses. If you have the key to a safe deposit box, you, and
-only you, can get hold of the money inside and thus spend it. If you lose your
-key and someone else finds it, then they aquire the ability to spend the money
-in the box and you simultaneously lose that ability. The same is true of
-Bitcoin addresses. When you create a Bitcoin address, you get the private half
-of a public/private key pair that's created for that address as part of the
-address creation. That private key gives you the ability to spend the 
-Bitcoins that are subsequently bestowed to that address.
+Bitcoin addresses. If you have the key to a safe deposit box, you, and only
+you, can get hold of the money inside and thus spend it. If you lose your key
+and someone else finds it, then they aquire the ability to spend the money in
+the box and you simultaneously lose that ability. The same is true of Bitcoin
+addresses. When you create a Bitcoin address, you get the private half of a
+public/private key pair that's created for that address as part of the address
+creation. That private key gives you the ability to spend the Bitcoins that are
+subsequently bestowed to that address.
 
 There is no link between the Bitcoin addresses that are created and the person
 or party that created them. Whoever has the private key can use it. The entire
@@ -236,13 +237,13 @@ to add to the swarm if you wanted to.
 
 The data model contained in the Blockchain is fairly simple. It is nothing more
 than a sequence of transactions. The most common type of transaction is also
-simple. It identifies a tranche of Bitcoin belonging to address A that is
-going to get moved to address B. The value being transferred to the new owner
-is described as this transaction's "output". At the time of the transaction,
-this value has clearly not yet been spent by B, so it is known as an
-"unspent transaction output", usually abbreviated to UTXO. The source of this
-value being transferred is the transaction's "input". And it is addressed in
-the transaction by reference to an UTXO from some earlier transaction in the
+simple. It identifies a tranche of Bitcoin belonging to address A that is going
+to get moved to address B. The value being transferred to the new owner is
+described as this transaction's "output". At the time of the transaction, this
+value has clearly not yet been spent by B, so it is known as an "unspent
+transaction output", usually abbreviated to UTXO. The source of this value
+being transferred is the transaction's "input". And it is addressed in the
+transaction by reference to an UTXO from some earlier transaction in the
 Blockchain in favour of A. Hence the Bitcoins being moved are traceable all the
 way back the point of their creation. (See paragraph about miners coming soon).
 
@@ -313,7 +314,7 @@ alter the hash value of the header. What the miners do in their competition is
 to search for a value for the nonce that satisfies a cryptographic challenge.
 The challenge is that the when the nonce is set to that value, and the block
 header has its hash calculated, the hash value that comes out has so many
-leading zeros. If you had to find a value that produced a hash that had just
+leading zeros. If you had to find a nonce value that produced a hash that had just
 one leading zero, you'd find one on average with just 15 trial and error
 experiments. But it has to be so difficult it takes massively powerful kit
 about ten minutes and the difficulty has to escalate over time so that the ten
@@ -327,14 +328,14 @@ one and a half billion Giga hashes per second. This is way beyond HPC
 performance. You need to deploy dedicated ASICs in parallel, and club together
 in pools with other miners as well to compete today.
 
-A natural question is why
-would you bother - given that it's going to cost you a bundle of money? That's
-all part of the brilliant thinking behind the Bitcoin ecosystem. You bother
-because the miner that wins any of  these ten-minute competitions gets two
-rewards. First each win produces by definition some newly minted Bitcoin - in
-favour of the winning miner. Second, each transaction in the block carries a
-processing fee or service charge, that the parties that created the transaction
-can decide for themselves. The winning minor is awarded all those fees.
+A natural question is why would you bother - given that it's going to cost you
+a bundle of money? That's all part of the brilliant thinking behind the Bitcoin
+ecosystem. You bother because the miner that wins any of  these ten-minute
+competitions gets two rewards. First each win produces by definition some newly
+minted Bitcoin - in favour of the winning miner. Second, each transaction in
+the block carries a processing fee or service charge, that the parties that
+created the transaction can decide for themselves. The winning minor is awarded
+all those fees.
 
 I've teased out those details to show that you have to be determined to compete
 as a miner, and to spend so much on electricity you literally tend to set up
@@ -343,13 +344,12 @@ by design. It encourages honest hashing power to join in for the financial
 rewards of mining, and to place financial barriers to people wishing to subvert
 the Bitcoin network on any scale.
 
-Coming back the the SPN node's trust checking needs then. The marvellous thing
+Coming back to the SPN node's trust checking needs then. The marvellous thing
 is, that your SPV node can do just one hash calculation on the block header
 that contains the nonce value so painfully found by the miner (The "Proof of
-Work").  If the
-resultant hash has the required number of leading zeros - it can be certain
-that the block is from the consensually accepted Blockchain and got put there
-by a successfully competing miner. 
+Work").  If the resultant hash has the required number of leading zeros - it
+can be certain that the block is from the consensually accepted Blockchain and
+got put there by a successfully competing miner. 
 
 So now we have shown how your SPV node can be satisfied by its copy of the
 block headers, we move on to how it gets information it can trust about the
@@ -397,9 +397,8 @@ We have one SPV node and one remote peer node.
 
 The remote peer simulates the holding of a block containing transactions, by
 holding the text of a shakespeare play. It splits the text into 512byte chunks
-to represent transactions in the block.
-It holds the transactions in memory along with the merkle tree it has built 
-for them.
+to represent transactions in the block.  It holds the transactions in memory
+along with the merkle tree it has built for them.
 
 Our SPV node asks the remote node for the merkle root at the outset - knowing
 (because this is a demo and not real), that it can trust the answer.

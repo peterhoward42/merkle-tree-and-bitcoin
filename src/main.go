@@ -1,16 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"github.com/peterhoward42/merkle-tree-and-bitcoin/src/bitcoin"
 )
 
 func main() {
-	//remoteNode := NewFullBitcoinNode()
-	//localNode := NewSpvBitcoinNode(remoteNode)
+	remoteNode := bitcoin.NewFullBitcoinNode()
+	localNode := bitcoin.NewSpvBitcoinNode(&remoteNode)
 
-	//localNode.GetAndValidateRecord42FromRemoteNode() // Prints OK
-	//remoteNode.GoDishonest()
-	//localNode.GetAndValidateRecord42FromRemoteNode() // Prints FAIL
-
-	fmt.Printf("Finished\n")
+	localNode.GetAndValidateRecord42FromRemoteNode() // Prints OK
 }
