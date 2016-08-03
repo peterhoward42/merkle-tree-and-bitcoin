@@ -14,16 +14,49 @@ type MerkleTree struct {
 
 func NewMerkleTree(bottomRow Row) (tree MerkleTree) {
 	tree.rows = append(tree.rows, bottomRow)
-	previous := bottomRow
-	for {
-		if len(previous) == 1 {
-			tree.MerkleRoot = previous[0]
-			break
-		}
-		tree.rows = append(tree.rows, makeRowAbove(previous))
-		previous = tree.rows[len(tree.rows)-1]
+	for under := bottomRow; 
+        len(under) > 1; under = tree.rows[len(tree.rows)-1] {
+		tree.rows = append(tree.rows, makeRowAbove(under))
+	}
+	tree.MerkleRoot = tree.rows[len(tree.rows)-1][0]
+	return
+}
+
+func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (merklePath [][32]byte) {
+	i := leafIndex
+	for _, row := range tree.rows[:len(tree.rows)-1] {
+		merklePath = append(merklePath, tree.siblingHash(row, i))
+		i = i / 2 // Deliberate integer division
 	}
 	return
+}
+
+func CalculateRootFromPath(
+	leafHash [32]byte, merklePath [][32]byte) (merkleRoot [32]byte) {
+
+	cumulativeHash := leafHash
+	for _, hashInPath := range merklePath {
+		cumulativeHash = hash.JoinAndHash(cumulativeHash, hashInPath)
+	}
+	merkleRoot = cumulativeHash
+	return
+}
+
+//---------------------------------------------------------------------------
+// Private methods
+//---------------------------------------------------------------------------
+
+func (tree MerkleTree) siblingHash(row Row, index int) (hash [32]byte) {
+	// For all odd indices, go left
+	if (index % 2) == 1 {
+		return row[index-1]
+	}
+	// For most even indices, go right
+	if (index + 1) <= len(row)-1 {
+		return row[index+1]
+	}
+	// Special case (required by definition of Merkle Tree)
+	return row[index]
 }
 
 func makeRowAbove(below Row) Row {
@@ -39,20 +72,4 @@ func makeRowAbove(below Row) Row {
 		}
 	}
 	return row
-}
-
-func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (merklePath [][32]byte) {
-	i := leafIndex
-	for _, row := range tree.rows[:len(tree.rows)-1] {
-		merklePath = append(merklePath, tree.siblingHash(row, i))
-		i = i / 2 // Deliberate integer division
-	}
-	return
-}
-
-func (tree MerkleTree) siblingHash(row Row, index int) (hash [32]byte) {
-	if ((index % 2) == 0) && (index+1) <= (len(row)-1) {
-		return row[index+1]
-	}
-	return row[index]
 }

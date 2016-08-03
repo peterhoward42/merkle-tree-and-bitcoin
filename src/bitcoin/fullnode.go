@@ -16,11 +16,14 @@ func NewFullBitcoinNode() (node FullBitcoinNode) {
 	return
 }
 
+func (node FullBitcoinNode) TrustedMerkleRootForBlock() (merkleRoot [32]byte) {
+	return node.merkleTree.MerkleRoot
+}
+
 func (node FullBitcoinNode) GetRecord42() (
 	record Record, merklePath [][32]byte) {
 
 	record = node.block.Records[42]
 	merklePath = node.merkleTree.MerklePathForLeaf(42)
-
 	return
 }

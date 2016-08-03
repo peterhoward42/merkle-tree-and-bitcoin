@@ -8,5 +8,7 @@ func main() {
 	remoteNode := bitcoin.NewFullBitcoinNode()
 	localNode := bitcoin.NewSpvBitcoinNode(&remoteNode)
 
-	localNode.GetAndValidateRecord42FromRemoteNode() // Prints OK
+	trustedMerkleRoot := remoteNode.TrustedMerkleRootForBlock()
+
+	localNode.GetAndValidateRecord42FromRemoteNode(trustedMerkleRoot)
 }
