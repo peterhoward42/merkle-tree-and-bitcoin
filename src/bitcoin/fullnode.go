@@ -2,6 +2,7 @@ package bitcoin
 
 import (
 	"github.com/peterhoward42/merkle-tree-and-bitcoin/src/merkle"
+	"github.com/peterhoward42/merkle-tree-and-bitcoin/src/hash"
 )
 
 type FullBitcoinNode struct {
@@ -16,12 +17,13 @@ func NewFullBitcoinNode() (node FullBitcoinNode) {
 	return
 }
 
-func (node FullBitcoinNode) TrustedMerkleRootForBlock() (merkleRoot [32]byte) {
-	return node.merkleTree.MerkleRoot
+// Assumed to be trusted
+func (node FullBitcoinNode) MerkleRootForBlock() (merkleRoot hash.Byte32) {
+	return node.merkleTree.MerkleRoot()
 }
 
 func (node FullBitcoinNode) GetRecord42() (
-	record Record, merklePath [][32]byte) {
+	record Record, merklePath []hash.Byte32) {
 
 	record = node.block.Records[42]
 	merklePath = node.merkleTree.MerklePathForLeaf(42)

@@ -24,7 +24,8 @@ func (spvNode SpvBitcoinNode) GetAndValidateRecord42FromRemoteNode(
 	// the alleged record and the alleged merkle path.
 
 	leafHash := hash.Hash(record)
-	myMerkleRoot := merkle.CalculateRootFromPath(leafHash, merklePath)
+	myMerkleRoot := merkle.CalculateMerkleRootFromMerklePath(
+		leafHash, merklePath)
 
 	fmt.Printf("Trusted:\n%0x", trustedMerkleRoot)
 	fmt.Printf("Indie:\n%0x\n", myMerkleRoot)

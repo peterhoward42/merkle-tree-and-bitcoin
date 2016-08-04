@@ -9,7 +9,7 @@ import (
 func TestVerySmallTreeThatCanBeTracedByHand(t *testing.T) {
 	// Build a tree that has bottom row comprising the hashes of just
 	// three records, namely the ascii values that make up "abc".
-	bottomRow := [][32]byte{}
+	bottomRow := []hash.Byte32{}
 	bottomRow = append(bottomRow, hash.Hash([]byte("a")))
 	bottomRow = append(bottomRow, hash.Hash([]byte("b")))
 	bottomRow = append(bottomRow, hash.Hash([]byte("c")))

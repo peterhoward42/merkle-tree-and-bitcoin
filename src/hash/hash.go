@@ -4,11 +4,13 @@ import (
 	"crypto/sha256"
 )
 
-func Hash(input []byte) [32]byte {
+type Byte32 [32]byte
+
+func Hash(input []byte) Byte32 {
 	return sha256.Sum256(input)
 }
 
-func JoinAndHash(left [32]byte, right [32]byte) [32]byte {
+func JoinAndHash(left Byte32, right Byte32) Byte32 {
 	combined := left[:]
 	combined = append(combined, right[:]...)
 	return Hash(combined)
