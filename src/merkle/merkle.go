@@ -5,11 +5,11 @@ import (
 	"math"
 )
 
-type Row []hash.Byte32
-
 type MerkleTree struct {
 	rows []Row
 }
+
+type Row []hash.Byte32
 
 func NewMerkleTree(bottomRow Row) (tree MerkleTree) {
 	tree.rows = append(tree.rows, bottomRow)
@@ -30,7 +30,7 @@ func (tree MerkleTree) MerkleRoot() hash.Byte32 {
 }
 
 func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (
-merklePath []hash.Byte32) {
+	merklePath []hash.Byte32) {
 	i := leafIndex
 	for _, row := range tree.rows[:len(tree.rows)-1] {
 		merklePath = append(merklePath, tree.siblingHash(row, i))
@@ -40,15 +40,13 @@ merklePath []hash.Byte32) {
 }
 
 func CalculateMerkleRootFromMerklePath(
-	leafHash hash.Byte32,
-	merklePath []hash.Byte32) (merkleRoot hash.Byte32) {
+	leafHash hash.Byte32, merklePath []hash.Byte32) hash.Byte32 {
 
 	cumulativeHash := leafHash
 	for _, hashInPath := range merklePath {
 		cumulativeHash = hash.JoinAndHash(cumulativeHash, hashInPath)
 	}
-	merkleRoot = cumulativeHash
-	return
+	return cumulativeHash
 }
 
 //---------------------------------------------------------------------------

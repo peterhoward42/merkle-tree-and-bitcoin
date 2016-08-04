@@ -6,7 +6,7 @@ import (
 
 func main() {
 	remoteNode := bitcoin.NewFullBitcoinNode()
-	localNode := bitcoin.NewSpvBitcoinNode(&remoteNode)
+	localNode := bitcoin.NewSpvBitcoinNode(remoteNode)
 
 	trustedMerkleRoot := remoteNode.MerkleRootForBlock()
 
