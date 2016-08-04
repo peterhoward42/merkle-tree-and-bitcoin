@@ -5,13 +5,17 @@ import (
 	"net/http"
 )
 
-func MakeDummyBlockFromSherlockHolmesText() (block Block) {
-	res, _ := http.Get("https://sherlock-holm.es/stories/plain-text/bosc.txt")
-	body, _ := ioutil.ReadAll(res.Body)
-	sz := 512
-	numRec := len(body) / sz // deliberate integer division
-	for i := 0; i < numRec; i++ {
-		record := body[i*sz : (i+1)*sz]
+func MakeBlockBasedOnBookText(storyAbbreviation string) (block Block) {
+	fullUrl := "https://sherlock-holm.es/stories/plain-text/" +
+		storyAbbreviation + ".txt"
+	httpResponse, _ := http.Get(fullUrl)
+	body, _ := ioutil.ReadAll(httpResponse.Body)
+	// Split the text into 512 byte records, spilling the remainder, for
+	// simplicity.
+	recordSize := 512
+	numRecords := len(body) / recordSize
+	for i := 0; i < numRecords; i++ {
+		record := body[i*recordSize : (i+1)*recordSize]
 		block.Records = append(block.Records, record)
 	}
 	return

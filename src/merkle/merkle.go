@@ -9,6 +9,8 @@ type MerkleTree struct {
 	rows []Row
 }
 
+type MerklePath []hash.Byte32
+
 type Row []hash.Byte32
 
 func NewMerkleTree(bottomRow Row) (tree MerkleTree) {
@@ -29,8 +31,7 @@ func (tree MerkleTree) MerkleRoot() hash.Byte32 {
 	return tree.topRow()[0]
 }
 
-func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (
-	merklePath []hash.Byte32) {
+func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (merklePath MerklePath) {
 	i := leafIndex
 	for _, row := range tree.rows[:len(tree.rows)-1] {
 		merklePath = append(merklePath, tree.siblingHash(row, i))
@@ -40,7 +41,7 @@ func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (
 }
 
 func CalculateMerkleRootFromMerklePath(
-	leafHash hash.Byte32, merklePath []hash.Byte32) hash.Byte32 {
+	leafHash hash.Byte32, merklePath MerklePath) hash.Byte32 {
 
 	cumulativeHash := leafHash
 	for _, hashInPath := range merklePath {

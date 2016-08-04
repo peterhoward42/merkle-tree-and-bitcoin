@@ -6,9 +6,10 @@ import (
 
 func main() {
 	remoteNode := bitcoin.NewFullBitcoinNode()
-	localNode := bitcoin.NewSpvBitcoinNode(remoteNode)
+	localNode := bitcoin.NewSpvBitcoinNode(&remoteNode)
 
-	trustedMerkleRoot := remoteNode.MerkleRootForBlock()
+	blockOfInterest := 2
+	recordToFetch := 42
 
-	localNode.GetAndValidateRecord42FromRemoteNode(trustedMerkleRoot)
+	localNode.FetchAndValidateRecordFromRemote(blockOfInterest, recordToFetch)
 }

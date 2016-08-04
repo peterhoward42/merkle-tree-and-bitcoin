@@ -1,34 +1,61 @@
 package bitcoin
 
 import (
-	"github.com/peterhoward42/merkle-tree-and-bitcoin/src/hash"
 	"github.com/peterhoward42/merkle-tree-and-bitcoin/src/merkle"
 )
 
 type FullBitcoinNode struct {
-	DisHonest  bool
-	block      Block
-	merkleTree merkle.MerkleTree
+	blockChain   []Block
+	blockHeaders []BlockHeader
+	merkleTrees  []merkle.MerkleTree
 }
 
-func NewFullBitcoinNode() (*FullBitcoinNode) {
-    node := FullBitcoinNode{}
-	node.block = MakeDummyBlockFromSherlockHolmesText()
-
-    hashesForBottomRowOfTree := node.block.GetHashesForAllRecords()
-	node.merkleTree = merkle.NewMerkleTree(hashesForBottomRowOfTree)
-	return &node
+func NewFullBitcoinNode() (node FullBitcoinNode) {
+	node.populateBlockChainWithMadeUpBlocks()
+	node.populateMerkleTrees()
+	node.populateBlockHeaders()
+	return node
 }
 
-func (node FullBitcoinNode) MerkleRootForBlock() (hash.Byte32) {
-	return node.merkleTree.MerkleRoot()
+func (node FullBitcoinNode) GetBlockHeader(blockOfInterest int) BlockHeader {
+	return node.blockHeaders[blockOfInterest]
 }
 
-func (node FullBitcoinNode) GetRecord42() (
-	record Record, 
-    merklePath []hash.Byte32) {
+func (node FullBitcoinNode) GetRecord(
+	blockOfInterest int,
+	recordToFetch int) (record Record, merklePath merkle.MerklePath) {
 
-	record = node.block.Records[42]
-	merklePath = node.merkleTree.MerklePathForLeaf(42)
+	block := node.blockChain[blockOfInterest]
+	record = block.Records[recordToFetch]
+	merkleTree := node.merkleTrees[blockOfInterest]
+	merklePath = merkleTree.MerklePathForLeaf(recordToFetch)
 	return
+}
+
+//---------------------------------------------------------------------------
+// Private below
+//---------------------------------------------------------------------------
+
+func (node FullBitcoinNode) populateBlockChainWithMadeUpBlocks() {
+	sherlockHolmesStories := []string{"bosc", "cree", "danc", "gold"}
+	for _, urlFragment := range sherlockHolmesStories {
+		block := MakeBlockBasedOnBookText(urlFragment)
+		node.blockChain = append(node.blockChain, block)
+	}
+}
+
+func (node FullBitcoinNode) populateMerkleTrees() {
+	for _, block := range node.blockChain {
+		bottomRow := block.MakeListOfHashesForListOfRecords()
+		tree := merkle.NewMerkleTree(bottomRow)
+		node.merkleTrees = append(node.merkleTrees, tree)
+	}
+}
+
+func (node FullBitcoinNode) populateBlockHeaders() {
+	for _, merkleTree := range node.merkleTrees {
+		merkleRoot := merkleTree.MerkleRoot()
+		blockHeader := BlockHeader{MerkleRoot: merkleRoot}
+		node.blockHeaders = append(node.blockHeaders, blockHeader)
+	}
 }

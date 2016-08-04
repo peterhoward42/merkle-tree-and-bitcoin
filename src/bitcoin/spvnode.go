@@ -15,18 +15,20 @@ func NewSpvBitcoinNode(fullNode *FullBitcoinNode) (node *SpvBitcoinNode) {
 	return
 }
 
-func (spvNode SpvBitcoinNode) GetAndValidateRecord42FromRemoteNode(
-	trustedMerkleRoot [32]byte) {
+func (spvNode SpvBitcoinNode) FetchAndValidateRecordFromRemote(
+	blockOfInterest int, recordToFetch int) {
 
-	record, merklePath := spvNode.remote.GetRecord42()
+	//blockHeader := spvNode.remote.GetBlockHeader(blockOfInterest)
+
+	record, merklePath := spvNode.remote.GetRecord(
+		blockOfInterest, recordToFetch)
 
 	// Reproduce the merkle root calculation independently this end, using
-	// the alleged record and the alleged merkle path.
+	// the alleged record and the alleged Merkle Path.
 
 	leafHash := hash.Hash(record)
-	myMerkleRoot := merkle.CalculateMerkleRootFromMerklePath(
+	independentMerkleRoot := merkle.CalculateMerkleRootFromMerklePath(
 		leafHash, merklePath)
 
-	fmt.Printf("Trusted:\n%0x", trustedMerkleRoot)
-	fmt.Printf("Indie:\n%0x\n", myMerkleRoot)
+	fmt.Printf("Indie root:\n%0x", independentMerkleRoot)
 }
