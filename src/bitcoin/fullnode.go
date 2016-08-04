@@ -5,6 +5,7 @@ import (
 )
 
 type FullBitcoinNode struct {
+    // Indexed in lock step
 	blockChain   []Block
 	blockHeaders []BlockHeader
 	merkleTrees  []merkle.MerkleTree
@@ -36,7 +37,7 @@ func (node FullBitcoinNode) GetRecord(
 // Private below
 //---------------------------------------------------------------------------
 
-func (node FullBitcoinNode) populateBlockChainWithMadeUpBlocks() {
+func (node *FullBitcoinNode) populateBlockChainWithMadeUpBlocks() {
 	sherlockHolmesStories := []string{"bosc", "cree", "danc", "gold"}
 	for _, urlFragment := range sherlockHolmesStories {
 		block := MakeBlockBasedOnBookText(urlFragment)
@@ -44,7 +45,7 @@ func (node FullBitcoinNode) populateBlockChainWithMadeUpBlocks() {
 	}
 }
 
-func (node FullBitcoinNode) populateMerkleTrees() {
+func (node *FullBitcoinNode) populateMerkleTrees() {
 	for _, block := range node.blockChain {
 		bottomRow := block.MakeListOfHashesForListOfRecords()
 		tree := merkle.NewMerkleTree(bottomRow)
@@ -52,7 +53,7 @@ func (node FullBitcoinNode) populateMerkleTrees() {
 	}
 }
 
-func (node FullBitcoinNode) populateBlockHeaders() {
+func (node *FullBitcoinNode) populateBlockHeaders() {
 	for _, merkleTree := range node.merkleTrees {
 		merkleRoot := merkleTree.MerkleRoot()
 		blockHeader := BlockHeader{MerkleRoot: merkleRoot}

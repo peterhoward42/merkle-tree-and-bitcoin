@@ -9,16 +9,22 @@ import (
 /*
 A note on the scope of these tests.
 
-The code that these tests cover, exists to explain and to educate.
-That is why it treats error handling as a distraction, and omits it.
-So these tests exist only to ensure that the logic I expressed in the code is
-doing what I intended, and produces correct results.
+The code that these tests cover, exists to explain and to educate, not to be an
+industrialised solution. That is why for example, error handling is omitted
+in the interests of simplicity.
+
+So the tests exist solely to check that the code is implementing the logic it
+is intended to, and to provide debugging support during the development and 
+future extension, by me or others.
 */
 
-func TestVerySmallTreeThatCanBeTracedByHand(t *testing.T) {
+// TestConstructionOfVerySmallTreeThatCanBeTracedByHand looks in detail at the
+// shape and contents of a Merkle Tree that is so small a human being can
+// readily assimilate what should be there. 
+func TestConstructionOfVerySmallTreeThatCanBeTracedByHand(t *testing.T) {
 	tree := makeTreeUsingCharsInStringAsRecords("abc")
 
-	// Validate the shape of the tree.
+	// Verify the shape of the tree.
 
 	if len(tree.rows) != 3 {
 		t.Errorf("Wong number of rows")
@@ -33,7 +39,7 @@ func TestVerySmallTreeThatCanBeTracedByHand(t *testing.T) {
 		t.Errorf("Row has wrong length")
 	}
 
-	// Validate the hashes in the middle row, have the expected relationships
+	// Verify the hashes in the middle row, have the expected relationships
 	// with those in the bottom row.
 
 	found := fmt.Sprintf("%0x", tree.rows[1][0])
@@ -52,7 +58,8 @@ func TestVerySmallTreeThatCanBeTracedByHand(t *testing.T) {
 			"Found:\n%s\ndiffers from expected:\n%s", found, expected)
 	}
 
-	// Validate the hash in the top row with respect to the middle row
+	// Verify the hash in the top row (the Merkle Root) with respect to the 
+    // middle row
 
 	found = fmt.Sprintf("%0x", tree.rows[2][0])
 	expected = fmt.Sprintf("%0x",
@@ -62,7 +69,7 @@ func TestVerySmallTreeThatCanBeTracedByHand(t *testing.T) {
 			"Found:\n%s\ndiffers from expected:\n%s", found, expected)
 	}
 
-	// Validate the MerkleRoot query function.
+	// Verify the MerkleRoot query function.
 
 	merkleRootFromQuery := fmt.Sprintf("%0x", tree.MerkleRoot())
 	if merkleRootFromQuery != expected {
@@ -71,18 +78,12 @@ func TestVerySmallTreeThatCanBeTracedByHand(t *testing.T) {
 	}
 }
 
-/*
-When the number of elements in a Merkle Tree's bottom row is a power of two,
-they form perfect binary trees in which every element in every non-leaf row
-has two children. Otherwise we end up with some nodes on the right edge with
-only a left child. If the number of leaf elements is one more than a power of
-2, this is so for all the non leaf nodes at the right edge. For one less than a
-power of two, it only occurs once, in the lowest, non leaf row.
-
-This brings in singularities in the topology indexing arithmetic and
-behaviour, so we will test the row lengths produced in each case.
-*/
-
+// TestPowerOfTwoRowLengths exercises the construction of a Merkle Tree when
+// the number of elements in the bottom row is a power of two. This is
+// significant because in this case the tree will be perfect binary tree, with
+// all non-leaf nodes having both a left and right child. The checks are to
+// make sure that there are the expected number of rows, each with the expected
+// number of nodes.
 func TestPowerOfTwoRowLengths(t *testing.T) {
 	tree := makeTreeUsingCharsInStringAsRecords("12345678")
 
@@ -103,6 +104,12 @@ func TestPowerOfTwoRowLengths(t *testing.T) {
 	}
 }
 
+// TestOneMoreThanPowerOfTwoRowLengths exercises the construction of a Merkle 
+// Tree when the number of elements in the bottom row exceeds a power of two by
+// one. This is significant because in this case the tree will have elements
+// all down its right hand side that have only a left child, and this property
+// stimulates different paths in both the row relationship arithmetic and
+// the choice of nodes to combine for hashing.
 func TestOneMoreThanPowerOfTwoRowLengths(t *testing.T) {
 	tree := makeTreeUsingCharsInStringAsRecords("123456789")
 
@@ -126,7 +133,12 @@ func TestOneMoreThanPowerOfTwoRowLengths(t *testing.T) {
 	}
 }
 
+// TestOneLess exercises the construction of a Merkle Tree when the number of 
+// elements in the bottom row is less than a power of two by one. This is 
+// significant because in this case the tree will have just one node in in the
+// first row above the leaves that has only a left child.
 func TestOneLessThanPowerOfTwoRowLengths(t *testing.T) {
+
 	tree := makeTreeUsingCharsInStringAsRecords("1234567")
 
 	if len(tree.rows) != 4 {
@@ -146,6 +158,35 @@ func TestOneLessThanPowerOfTwoRowLengths(t *testing.T) {
 	}
 }
 
+// TestActualHashValuesInSmallestViableTree makes a Merkle Tree with just two
+// elements in the bottom row comprising the hashes of the ASCII characters
+// 'A' and 'B'. This allows us to verify the hash values created for both leaf
+// nodes and the only node present - the root.
+func TestActualHashValuesInSmallestViableTree(t *testing.T) {
+    // SHA256 hashes reference values available here:
+    // http://www.xorbin.com/tools/sha256-hash-calculator 
+	tree := makeTreeUsingCharsInStringAsRecords("AB")
+
+	leftLeafHash := fmt.Sprintf("%0x", tree.rows[0][0])
+    expected :=
+    "559aead08264d5795d3909718cdd05abd49572e84fe55590eef31a88a08fdffd"
+	if leftLeafHash != expected {
+		t.Errorf(
+			"Found:\n%s\ndiffers from expected:\n%s", leftLeafHash, expected)
+	}
+
+	rightLeafHash := fmt.Sprintf("%0x", tree.rows[0][1])
+    expected =
+    "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c"
+	if rightLeafHash != expected {
+		t.Errorf(
+			"Found:\n%s\ndiffers from expected:\n%s", rightLeafHash, expected)
+	}
+}
+
+// makeTreeUsingCharsInStringAsRecords is a utility function to support unit
+// tests. It creates Merkle Trees in which the leaf nodes are the hashes of 
+// single bytes that comprise a string.
 func makeTreeUsingCharsInStringAsRecords(inputString string) MerkleTree {
 	bottomRow := []hash.Byte32{}
 	for _, c := range []byte(inputString) {
