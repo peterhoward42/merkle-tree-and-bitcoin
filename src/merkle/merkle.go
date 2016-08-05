@@ -9,9 +9,14 @@ type MerkleTree struct {
 	rows []Row
 }
 
-type MerklePath []hash.Byte32
-
 type Row []hash.Byte32
+
+type MerklePath []MerklePathElement
+
+type MerklePathElement struct {
+	hash                    hash.Byte32
+	useFirstInConcatenation bool // me+other, not other+me
+}
 
 func NewMerkleTree(bottomRow Row) (tree MerkleTree) {
 	tree.rows = append(tree.rows, bottomRow)
@@ -31,11 +36,15 @@ func (tree MerkleTree) MerkleRoot() hash.Byte32 {
 	return tree.topRow()[0]
 }
 
-func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (merklePath MerklePath) {
+func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (
+	merklePath MerklePath) {
 	i := leafIndex
 	for _, row := range tree.rows[:len(tree.rows)-1] {
-        siblingIndex := tree.siblingIndex(row, i)
-		merklePath = append(merklePath, row[siblingIndex])
+		sibling, useFirstInConcatenation := row.evaluateSibling(i)
+		merklePathElement := MerklePathElement{
+			hash: row[sibling],
+			useFirstInConcatenation: useFirstInConcatenation}
+		merklePath = append(merklePath, merklePathElement)
 		i = i / 2 // Deliberate integer division
 	}
 	return
@@ -45,8 +54,14 @@ func CalculateMerkleRootFromMerklePath(
 	leafHash hash.Byte32, merklePath MerklePath) hash.Byte32 {
 
 	cumulativeHash := leafHash
-	for _, hashInPath := range merklePath {
-		cumulativeHash = hash.JoinAndHash(cumulativeHash, hashInPath)
+	for _, merklePathElement := range merklePath {
+		if merklePathElement.useFirstInConcatenation {
+			cumulativeHash = hash.JoinAndHash(
+				merklePathElement.hash, cumulativeHash)
+		} else {
+			cumulativeHash = hash.JoinAndHash(
+				cumulativeHash, merklePathElement.hash)
+		}
 	}
 	return cumulativeHash
 }
@@ -63,24 +78,32 @@ func (tree MerkleTree) topRow() Row {
 	return tree.rows[len(tree.rows)-1]
 }
 
-// siblingIndex works out for a given node, which node in the same row should
-// be considered its sibling. The sibling whose hash should be concatenated
-// with its own hash that is, to create the parent node. Note however that 
-// the nodes at the right hand end of rows with an odd number of elements do 
-// not have one. In this special case, Merkle Trees, by defintion, substitute
-// the hash of the first node for this role.
-func (tree MerkleTree) siblingIndex(
-        row Row, index int) (sibling int) {
-	// For all odd indices, go left
-	if (index % 2) == 1 {
-		return index-1
+/* evaluateSibling works out which neighbour of element X in a table row is
+ * the sibling whose hash should be combined with that of X to form the parent
+ * node hash. There is a general rule depending on if X is an even or odd
+ * numbered element, plus a special case for X being at the right hand end of
+ * an odd length row. In addition to identifying the sibling, this function
+ * must capture the sequence in which the hash concatenations must be done, and
+ * hence returns both the sibling index and a flag to signify the concatenation
+ * order required. */
+func (row Row) evaluateSibling(myIndex int) (
+	siblingIndex int, useFirstInConcatenation bool) {
+
+	// For all odd indices, the pair is leftNeighbour->me.
+	// For most even indices, the pair is me->rightNeighbour
+	// For special case, the pair is me->me (by definition in Merkle Trees)
+
+	if myIndex%2 == 1 {
+		siblingIndex = myIndex - 1
+		useFirstInConcatenation = true
+	} else if (myIndex + 1) <= len(row)-1 {
+		siblingIndex = myIndex + 1
+		useFirstInConcatenation = false
+	} else {
+		siblingIndex = myIndex
+		useFirstInConcatenation = true // moot
 	}
-	// For most even indices, go right
-	if (index + 1) <= len(row)-1 {
-		return index+1
-	}
-	// Special case (required by definition of Merkle Tree)
-	return index
+	return
 }
 
 func makeRowAbove(below Row) Row {

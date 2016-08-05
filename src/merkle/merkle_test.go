@@ -70,18 +70,41 @@ func TestLeafHashesInABCTree(t *testing.T) {
 	}
 }
 
-// TestSiblingIdentification exercises the function inside the Merkle Tree
-// implementation that decides which node should be used to provide the hash
-// value for the node's sibling. This has 3 separate logical paths, each of
-// which are stimulated and checked.
+/* TestSiblingIdentification exercises the function inside the Merkle Tree
+ * implementation that decides which node should be used to provide the hash
+ * value for another node's sibling when a Merkle Tree is requested for a given
+ * leaf node. Also the sequence in which they should be concatenated. This has
+ * 3 separate logical paths, each of which are stimulated and checked.
+ */
 func TestSiblingIdentification(t *testing.T) {
 	tree := makeABCTree()
 
-    // Odd numbered elements should use their left neighbour.
-    siblingIndex := tree.siblingIndex(tree.rows[1], 1)
-    if siblingIndex != 0 {
+	// Odd numbered elements should use their left neighbour as the first in
+	// the pair.
+	siblingIndex, useFirst := tree.rows[1].evaluateSibling(1)
+	if siblingIndex != 0 {
 		t.Errorf("Wrong sibling index")
-    }
+	}
+	if useFirst != true {
+		t.Errorf("Wrong order")
+	}
+
+	// Even numbered elements should (in general), use their right neighbour
+	// as the second in the pair.
+	siblingIndex, useFirst = tree.rows[1].evaluateSibling(0)
+	if siblingIndex != 1 {
+		t.Errorf("Wrong sibling index")
+	}
+	if useFirst != false {
+		t.Errorf("Wrong order")
+	}
+
+	// Even numbered elements that have no right neighbour, use themselves
+	// and the sequence is immaterial.
+	siblingIndex, useFirst = tree.rows[0].evaluateSibling(2)
+	if siblingIndex != 2 {
+		t.Errorf("Wrong sibling index")
+	}
 }
 
 // TestHashRelationshipsInsideABCTree builds a tree in which the leaves are
