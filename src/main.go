@@ -1,7 +1,7 @@
 package main
 
 import (
-    "fmt"
+	"fmt"
 	"github.com/peterhoward42/merkle-tree-and-bitcoin/src/bitcoin"
 )
 
@@ -13,12 +13,12 @@ func main() {
 	recordToFetch := 42
 
 	record, err := localNode.FetchAndValidateRecordFromRemote(
-            blockOfInterest, recordToFetch)
+		blockOfInterest, recordToFetch)
 
-    if err != nil {
-        fmt.Printf("Fetch failed with: %v", err)
-    } else {
-        fmt.Printf("Fetched record of size %d bytes, and passed validation.",
-            len(*record))
-    }
+	if err != nil {
+		fmt.Printf("Fetch failed with: %v", err)
+	} else {
+		fmt.Printf("Fetched record of size %d bytes, and passed validation.",
+			len(*record))
+	}
 }

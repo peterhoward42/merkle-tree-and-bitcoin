@@ -1,8 +1,8 @@
 package bitcoin
 
 import (
-    "errors"
-    "fmt"
+	"errors"
+	"fmt"
 	"github.com/peterhoward42/merkle-tree-and-bitcoin/src/hash"
 	"github.com/peterhoward42/merkle-tree-and-bitcoin/src/merkle"
 )
@@ -31,19 +31,19 @@ func (spvNode SpvBitcoinNode) FetchAndValidateRecordFromRemote(
 	independentMerkleRoot := merkle.CalculateMerkleRootFromMerklePath(
 		leafHash, merklePath)
 
-    if independentMerkleRoot == blockHeader.MerkleRoot {
-        return &fetchedRecord, nil
-    } else {
-        return nil, errors.New(
-            formatErrorMessage(independentMerkleRoot,
-            blockHeader.MerkleRoot))
-    }
+	if independentMerkleRoot == blockHeader.MerkleRoot {
+		return &fetchedRecord, nil
+	} else {
+		return nil, errors.New(
+			formatErrorMessage(independentMerkleRoot,
+				blockHeader.MerkleRoot))
+	}
 }
 
 func formatErrorMessage(independentMerkleRoot hash.Byte32,
-            blockHeaderMerkleRoot hash.Byte32) string {
-    return fmt.Sprintf(
-        "Independently calculated Merkle Root differs from " + 
-        "the one in the block header:\n%0x\n%0x",
-        independentMerkleRoot, blockHeaderMerkleRoot)
+	blockHeaderMerkleRoot hash.Byte32) string {
+	return fmt.Sprintf(
+		"Independently calculated Merkle Root differs from "+
+			"the one in the block header:\n%s\n%s",
+		independentMerkleRoot.Hex(), blockHeaderMerkleRoot.Hex())
 }

@@ -5,7 +5,7 @@ import (
 )
 
 type FullBitcoinNode struct {
-    // Indexed in lock step
+	// Indexed in lock step
 	blockChain   []Block
 	blockHeaders []BlockHeader
 	merkleTrees  []merkle.MerkleTree

@@ -34,7 +34,8 @@ func (tree MerkleTree) MerkleRoot() hash.Byte32 {
 func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (merklePath MerklePath) {
 	i := leafIndex
 	for _, row := range tree.rows[:len(tree.rows)-1] {
-		merklePath = append(merklePath, tree.siblingHash(row, i))
+        siblingIndex := tree.siblingIndex(row, i)
+		merklePath = append(merklePath, row[siblingIndex])
 		i = i / 2 // Deliberate integer division
 	}
 	return
@@ -62,17 +63,24 @@ func (tree MerkleTree) topRow() Row {
 	return tree.rows[len(tree.rows)-1]
 }
 
-func (tree MerkleTree) siblingHash(row Row, index int) (hash hash.Byte32) {
+// siblingIndex works out for a given node, which node in the same row should
+// be considered its sibling. The sibling whose hash should be concatenated
+// with its own hash that is, to create the parent node. Note however that 
+// the nodes at the right hand end of rows with an odd number of elements do 
+// not have one. In this special case, Merkle Trees, by defintion, substitute
+// the hash of the first node for this role.
+func (tree MerkleTree) siblingIndex(
+        row Row, index int) (sibling int) {
 	// For all odd indices, go left
 	if (index % 2) == 1 {
-		return row[index-1]
+		return index-1
 	}
 	// For most even indices, go right
 	if (index + 1) <= len(row)-1 {
-		return row[index+1]
+		return index+1
 	}
 	// Special case (required by definition of Merkle Tree)
-	return row[index]
+	return index
 }
 
 func makeRowAbove(below Row) Row {
