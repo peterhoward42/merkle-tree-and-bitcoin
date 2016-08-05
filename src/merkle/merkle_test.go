@@ -107,9 +107,10 @@ func TestSiblingIdentification(t *testing.T) {
 	}
 }
 
-// TestHashRelationshipsInsideABCTree builds a tree in which the leaves are
-// the hash values of the characters A B C respectively, and then ensures the
-// hash relationships between parents and children are as expected.
+/* TestHashRelationshipsInsideABCTree builds a tree in which the leaves are the
+ * hash values of the characters A B C respectively, and then ensures the hash
+ * relationships between parents and children are as expected.
+ */
 func TestHashRelationshipsInsideABCTree(t *testing.T) {
 	tree := makeABCTree()
 
@@ -228,6 +229,37 @@ func TestOneLessThanPowerOfTwoRowLengths(t *testing.T) {
 	}
 	if len(tree.rows[3]) != 1 {
 		t.Errorf("Row has wrong length")
+	}
+}
+
+/* TestMerklePathQuery exercises the tree query function that provides the
+ * Merkle Path for a given leaf index, and ensures that this path is properly
+ * formed.
+ */
+func TestMerklePathQuery(t *testing.T) {
+	tree := makeABCTree()
+	indexOfB := 1
+	merklePath := tree.MerklePathForLeaf(indexOfB)
+	if len(merklePath) != 2 {
+		t.Errorf("Wrong length")
+	}
+
+	// Sibling of B should be A, used first in concatenation
+	siblingOfB := merklePath[0]
+	if siblingOfB.hash.Hex() != hashOfLetterA {
+		t.Errorf("Wrong hash value in Merkle Path")
+	}
+	if siblingOfB.useFirstInConcatenation != true {
+		t.Errorf("Wrong sequence value in Merkle Path")
+	}
+
+	// Sibling of AB should be CC, used second in concatenation
+	siblingOfAB := merklePath[1]
+	if siblingOfAB.hash.Hex() != tree.rows[1][1].Hex() {
+		t.Errorf("Wrong hash value in Merkle Path")
+	}
+	if siblingOfAB.useFirstInConcatenation != false {
+		t.Errorf("Wrong sequence value in Merkle Path")
 	}
 }
 
