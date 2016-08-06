@@ -10,7 +10,7 @@ A note on the scope of these tests.
 
 The code that these tests cover, exists to explain and to educate, not to be an
 industrialised solution. That is why for example, error handling is omitted
-to make the code easier to understand.
+to make the code smaller, and easier to understand.
 
 So the tests exist solely to check that the code is implementing the logic it
 is intended to, and to provide debugging support for developers.
@@ -233,8 +233,9 @@ func TestOneLessThanPowerOfTwoRowLengths(t *testing.T) {
 }
 
 /* TestMerklePathQuery exercises the tree query function that provides the
- * Merkle Path for a given leaf index, and ensures that this path is properly
- * formed.
+ * Merkle Path for a given leaf index on a tree for which the correct answer
+ * can be predicted indepentently, and ensures that the path provided is
+ * correct.
  */
 func TestMerklePathQuery(t *testing.T) {
 	tree := makeABCTree()

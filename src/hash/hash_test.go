@@ -44,7 +44,6 @@ func TestHashWrapperFunctionWithKnownTestVector(t *testing.T) {
 // externally sourced hex string representations of the two hashes to be
 // joined into their byte stream representations, and manually concatenating
 // these byte streams before rehashing them.
-// hex string representations of the input hash values.
 func TestJoinAndHash(t *testing.T) {
 	// We will use the characters 'A' and 'B' as our reference inputs.
 
