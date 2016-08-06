@@ -68,6 +68,8 @@ func (tree MerkleTree) MerkleRoot() hash.Byte32 {
 func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (
 	merklePath MerklePath) {
 	i := leafIndex
+    // This iteration starts at the leaf row and consume all the row above
+    // except the top one containing the Merkle Root.
 	for _, row := range tree.rows[:len(tree.rows)-1] {
 		sibling, useFirstInConcatenation := row.evaluateSibling(i)
 		merklePathElement := MerklePathElement{
