@@ -38,10 +38,10 @@ type MerklePathElement struct {
 // NewMerkleTree is a factory that makes the Merkle Tree corresponding to a
 // given set of leaf row hash values.
 func NewMerkleTree(bottomRow Row) (tree MerkleTree) {
-    // We install the bottom row and then work our way up making new rows,
-    // derived from the one below - each approximating to half the length of
-    // the one underneath. Stopping of course when we arrive at a row with just
-    // one node - which is the Merkle Root by definition.
+	// We install the bottom row and then work our way up making new rows,
+	// derived from the one below - each approximating to half the length of
+	// the one underneath. Stopping of course when we arrive at a row with just
+	// one node - which is the Merkle Root by definition.
 	tree.rows = append(tree.rows, bottomRow)
 	rowBeneath := bottomRow
 	for {
@@ -61,9 +61,9 @@ func (tree MerkleTree) MerkleRoot() hash.Byte32 {
 	return tree.topRow()[0]
 }
 
-// MerklePathForLeaf is a an API method that builds the Merkle Path that 
-// corresponds to a given leaf in the tree. You specify which leaf by 
-// providing its record index. It works bottom up calculating which nodes in 
+// MerklePathForLeaf is a an API method that builds the Merkle Path that
+// corresponds to a given leaf in the tree. You specify which leaf by
+// providing its record index. It works bottom up calculating which nodes in
 // the tree are the siblings from which hashes should be collected.
 func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (
 	merklePath MerklePath) {
@@ -74,10 +74,10 @@ func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (
 			hash: row[sibling],
 			useFirstInConcatenation: useFirstInConcatenation}
 		merklePath = append(merklePath, merklePathElement)
-        // This division produces the index that should be used in the row
-        // above to find a given node's parent. The truncating integer division
-        // is deliberate and necessary to produce the same parent for two
-        // adjacent nodes.
+		// This division produces the index that should be used in the row
+		// above to find a given node's parent. The truncating integer division
+		// is deliberate and necessary to produce the same parent for two
+		// adjacent nodes.
 		i = i / 2
 	}
 	return
@@ -93,7 +93,7 @@ func (tree MerkleTree) MerklePathForLeaf(leafIndex int) (
 // consumes the Merkle Path one hash at a time by concatenating each hash
 // encountered to the previously calculated value, before rehashing the
 // concatenated bytes and repeating the process for the next hash in the
-// path. Note that is seeks advice from the Merkle Path about in which order 
+// path. Note that is seeks advice from the Merkle Path about in which order
 // the elements should be concatenated at each level.
 func CalculateMerkleRootFromMerklePath(
 	leafHash hash.Byte32, merklePath MerklePath) hash.Byte32 {
@@ -228,5 +228,3 @@ in O(log_2[N]). This could of course be reduced to O(constant) if we were to
 calculate and store the Merkle Paths for each node at construction time, but
 this would violate our desire to conserve memory consumption.
 */
-
-

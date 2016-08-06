@@ -10,7 +10,7 @@ import (
 // the internet and use the contents of each to create a block. To create
 // records inside each block to mimic the presence of transactions in a real
 // Blockchain block, it splits the text into 512 byte chunks. There is no
-// need for the chunks to be of the same size, but it is harmless if they are, 
+// need for the chunks to be of the same size, but it is harmless if they are,
 // and makes the code simpler.
 func MakeSetOfBlocksBasedOnContentsOfDownloadedBooks() (blocks []Block) {
 	sherlockHolmesStories := []string{"bosc", "cree", "danc", "gold"}

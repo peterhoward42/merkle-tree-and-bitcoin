@@ -9,7 +9,7 @@ import (
  * Single-Payment-Verification (SPV) nodes as part of their strategy to detect
  * dishonest or corrupted replies from their peer-to-peer connections.
  *
- * For a comprehensive written description, primer and background, see the 
+ * For a comprehensive written description, primer and background, see the
  * sister article in the docs directory of the source code repository.
  *
  * The code aims to explain and illustrate the operation of Merkle Trees for
@@ -29,8 +29,8 @@ import (
  * individual transactions.
  *
  * The SPV node chooses a block number and the record inside that block it
- * wants to fetch, and initiates the fetching process by requestiong the 
- * corresponding block header from its remote full node. When this is 
+ * wants to fetch, and initiates the fetching process by requestiong the
+ * corresponding block header from its remote full node. When this is
  * returned, the SPV node captures the required Merkle Root hash value which is
  * available in the Block Header.
  *
@@ -40,15 +40,15 @@ import (
  *
  * It then traverses this supplied Merkle Path, so as to calculate the Merkle
  * Root independently, and when this matches the one fetched from the block
- * header, it accepts the record, and treats us by outputting the fragment 
- * of Sherlock's text from the record. Otherwise it emits a validation 
+ * header, it accepts the record, and treats us by outputting the fragment
+ * of Sherlock's text from the record. Otherwise it emits a validation
  * failure message.
  */
 
 func main() {
 
-    // Real SPV nodes have to discover some remote full nodes to talk to.
-    // We make life a little simpler with an arranged marriage...
+	// Real SPV nodes have to discover some remote full nodes to talk to.
+	// We make life a little simpler with an arranged marriage...
 
 	remoteNode := bitcoin.NewFullBitcoinNode()
 	localNode := bitcoin.SpvBitcoinNode{Remote: &remoteNode}

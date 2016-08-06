@@ -5,8 +5,8 @@ import (
 	"fmt"
 )
 
-// Byte32 is a type that provides a cute way of expressing this trivial 
-// fixed size array type, and is useful because the type is often used in 
+// Byte32 is a type that provides a cute way of expressing this trivial
+// fixed size array type, and is useful because the type is often used in
 // slices, and it prevents a forest of square brackets when that is done.
 type Byte32 [32]byte
 
