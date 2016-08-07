@@ -43,6 +43,18 @@ import (
  * header, it accepts the record, and treats us by outputting the fragment
  * of Sherlock's text from the record. Otherwise it emits a validation
  * failure message.
+ *
+ * You are reading the main.go module for the program - which is very short as
+ * once it has constructed objects to represent the local and remote node, it
+ * delegates all the work to them. You can find the rest of the code in the sub
+ * packages: bitcoin, merkle and hash.
+ *
+ * If you'd like to run the code yourself, you can find instructions about how
+ * to install Go here: https://golang.org/doc/install
+ *
+ * Downloading and using code from Github repositories like this is an
+ * intrinsic part of the Go language - so the instructions above will also show
+ * you how to get and run this demo code.
  */
 
 func main() {
