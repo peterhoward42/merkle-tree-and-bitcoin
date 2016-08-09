@@ -1,3 +1,12 @@
+--EXECUTIVE SUMMARY--
+
+It's easy to miss at first glance, the brilliance of some of the inventions
+behind Bitcoin. Like computers in an internet swarm being able to communicate
+and collaborate with each other quite routinely despite some of them lying
+deliberately with criminal or malicious intent. At the heart of this brilliance
+lie Merkle Trees; the subject of this article. It's a teaching article, with
+accompanying code (in Go).
+
 --INTRODUCTION--
 
 I've become very interested and immersed in the programming and thinking behind
@@ -268,7 +277,7 @@ If the file you are downloading is for example 30GB, then when divided into
 256KB chunks it will have 122,881 chunks. So the Merkle tree will have 122,881
 nodes in its bottom row. The Merkle Path you need is one 32 byte hash value
 from each tier in the tree. A complete binary tree with 122,881 nodes has only
-17 tiers.  (A log-base-2 relationship). So you get all the data you need for
+17 tiers. (A log-base-2 relationship). So you get all the data you need for
 your proof test in just 544 bytes of data (17 * 32), and you need do only 17
 hash calculations.
 
